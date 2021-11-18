@@ -92,14 +92,17 @@ type Config struct {
 	Auth         *Auth
 	MultiTenancy tenancy.Authorizer
 
+	PromscaleEnableFeatures      string
+	PromscaleEnabledFeaturesMap map[string]struct{}
+
 	// PromQL configuration.
-	EnableFeatures       string
-	EnabledFeaturesList  []string
-	MaxQueryTimeout      time.Duration
-	SubQueryStepInterval time.Duration // Default step interval value if the user has not provided.
-	LookBackDelta        time.Duration
-	MaxSamples           int64
-	MaxPointsPerTs       int64
+	PromQLEnableFeatures      string
+	PromQLEnabledFeaturesList []string
+	MaxQueryTimeout           time.Duration
+	SubQueryStepInterval      time.Duration // Default step interval value if the user has not provided.
+	LookBackDelta             time.Duration
+	MaxSamples                int64
+	MaxPointsPerTs            int64
 }
 
 func ParseFlags(fs *flag.FlagSet, cfg *Config) *Config {
@@ -116,8 +119,10 @@ func ParseFlags(fs *flag.FlagSet, cfg *Config) *Config {
 	fs.StringVar(&cfg.Auth.BearerToken, "bearer-token", "", "Bearer token (JWT) used for web endpoint authentication. Disabled by default. Mutually exclusive with bearer-token-file and basic auth methods.")
 	fs.StringVar(&cfg.Auth.BearerTokenFile, "bearer-token-file", "", "Path of the file containing the bearer token (JWT) used for web endpoint authentication. Disabled by default. Mutually exclusive with bearer-token and basic auth methods.")
 
+	fs.StringVar(&cfg.PromscaleEnableFeatures, "enable-feature", "", "Enable a beta/experimental features as a comma-separated list. Currently the following values can be passed: tracing")
+
 	// PromQL configuration flags.
-	fs.StringVar(&cfg.EnableFeatures, "promql-enable-feature", "", "[EXPERIMENTAL] Enable optional PromQL features, separated by commas. These are disabled by default in Promscale's PromQL engine. "+
+	fs.StringVar(&cfg.PromQLEnableFeatures, "promql-enable-feature", "", "[EXPERIMENTAL] Enable optional PromQL features, separated by commas. These are disabled by default in Promscale's PromQL engine. "+
 		"Currently, this includes 'promql-at-modifier' and 'promql-negative-offset'. For more information, see https://github.com/prometheus/prometheus/blob/master/docs/disabled_features.md")
 	fs.DurationVar(&cfg.MaxQueryTimeout, "promql-query-timeout", 2*time.Minute, "Maximum time a query may take before being aborted. This option sets both the default and maximum value of the 'timeout' parameter in "+
 		"'/api/v1/query.*' endpoints.")
@@ -133,10 +138,19 @@ func ParseFlags(fs *flag.FlagSet, cfg *Config) *Config {
 }
 
 func Validate(cfg *Config) error {
-	if cfg.EnableFeatures != "" {
-		cfg.EnabledFeaturesList = strings.Split(cfg.EnableFeatures, ",")
+	if cfg.PromscaleEnableFeatures != "" {
+		featureList := strings.Split(cfg.PromscaleEnableFeatures, ",")
+		cfg.PromscaleEnabledFeaturesMap = make(map[string]struct{}, len(featureList))
+		for _, f := range featureList {
+			cfg.PromscaleEnabledFeaturesMap[f] = struct{}{}
+		}
 	} else {
-		cfg.EnabledFeaturesList = []string{}
+		cfg.PromscaleEnabledFeaturesMap = make(map[string]struct{}, 0)
+	}
+	if cfg.PromQLEnableFeatures != "" {
+		cfg.PromQLEnabledFeaturesList = strings.Split(cfg.PromQLEnableFeatures, ",")
+	} else {
+		cfg.PromQLEnabledFeaturesList = []string{}
 	}
 	return cfg.Auth.Validate()
 }

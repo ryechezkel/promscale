@@ -112,6 +112,13 @@ func ParseFlags(cfg *Config, args []string) (*Config, error) {
 		return nil, fmt.Errorf("validate config: %w", err)
 	}
 
+	if cfg.OTLPGRPCListenAddr != "" {
+		_, present := cfg.APICfg.PromscaleEnabledFeaturesMap["tracing"]
+		if !present {
+			return nil, fmt.Errorf("feature 'tracing' must be enabled to configure 'otlp-grpc-server-listen-address'")
+		}
+	}
+
 	cfg.StopAfterMigrate = false
 	if strings.EqualFold(migrateOption, "true") {
 		cfg.Migrate = true

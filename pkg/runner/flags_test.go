@@ -56,8 +56,8 @@ func TestParseFlags(t *testing.T) {
 			name: "enable disabled-features",
 			args: []string{"-promql-enable-feature", "promql-at-modifier"},
 			result: func(c Config) Config {
-				c.APICfg.EnableFeatures = "promql-at-modifier"
-				c.APICfg.EnabledFeaturesList = []string{"promql-at-modifier"}
+				c.APICfg.PromQLEnableFeatures = "promql-at-modifier"
+				c.APICfg.PromQLEnabledFeaturesList = []string{"promql-at-modifier"}
 				return c
 			},
 		},
@@ -151,6 +151,24 @@ func TestParseFlags(t *testing.T) {
 				"TS_PROM_INSTALL_EXTENSIONS": "foobar",
 			},
 			shouldError: true,
+		},
+		{
+			name:        "setting tracing parameter without tracing enabled should fail",
+			args:        []string{"-otlp-grpc-server-listen-address", "bar"},
+			shouldError: true,
+		},
+		{
+			name: "enable feature should populate map of enabled features",
+			args: []string{"-enable-feature", "foo,bar,baz"},
+			result: func(c Config) Config {
+				c.APICfg.PromscaleEnableFeatures = "foo,bar,baz"
+				c.APICfg.PromscaleEnabledFeaturesMap = map[string]struct{}{
+					"foo": struct{}{},
+					"bar": struct{}{},
+					"baz": struct{}{},
+				}
+				return c
+			},
 		},
 	}
 

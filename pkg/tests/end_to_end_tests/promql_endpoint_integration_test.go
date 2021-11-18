@@ -276,13 +276,13 @@ func dateHeadersMatch(expected, actual []string) bool {
 
 func defaultAPIConfig() *api.Config {
 	return &api.Config{
-		AllowedOrigin:        regexp.MustCompile(".*"),
-		TelemetryPath:        "/metrics",
-		MaxQueryTimeout:      time.Minute * 2,
-		SubQueryStepInterval: time.Minute,
-		EnabledFeaturesList:  []string{"promql-at-modifier", "promql-negative-offset"},
-		MaxSamples:           math.MaxInt32,
-		MaxPointsPerTs:       11000,
+		AllowedOrigin:             regexp.MustCompile(".*"),
+		TelemetryPath:             "/metrics",
+		MaxQueryTimeout:           time.Minute * 2,
+		SubQueryStepInterval:      time.Minute,
+		PromQLEnabledFeaturesList: []string{"promql-at-modifier", "promql-negative-offset"},
+		MaxSamples:                math.MaxInt32,
+		MaxPointsPerTs:            11000,
 	}
 }
 
