@@ -145,7 +145,7 @@ func Validate(cfg *Config) error {
 			cfg.PromscaleEnabledFeaturesMap[f] = struct{}{}
 		}
 	} else {
-		cfg.PromscaleEnabledFeaturesMap = make(map[string]struct{}, 0)
+		cfg.PromscaleEnabledFeaturesMap = make(map[string]struct{})
 	}
 	if cfg.PromQLEnableFeatures != "" {
 		cfg.PromQLEnabledFeaturesList = strings.Split(cfg.PromQLEnableFeatures, ",")
