@@ -119,10 +119,10 @@ func ParseFlags(fs *flag.FlagSet, cfg *Config) *Config {
 	fs.StringVar(&cfg.Auth.BearerToken, "bearer-token", "", "Bearer token (JWT) used for web endpoint authentication. Disabled by default. Mutually exclusive with bearer-token-file and basic auth methods.")
 	fs.StringVar(&cfg.Auth.BearerTokenFile, "bearer-token-file", "", "Path of the file containing the bearer token (JWT) used for web endpoint authentication. Disabled by default. Mutually exclusive with bearer-token and basic auth methods.")
 
-	fs.StringVar(&cfg.PromscaleEnableFeatures, "enable-feature", "", "Enable a beta/experimental features as a comma-separated list. Currently the following values can be passed: tracing")
+	fs.StringVar(&cfg.PromscaleEnableFeatures, "enable-feature", "", "Enable a beta/experimental features as a comma-separated list. Currently the following values can be passed: tracing, promql-at-modifier, promql-negative-offset, exemplar-storage")
 
-	// PromQL configuration flags.
-	fs.StringVar(&cfg.PromQLEnableFeatures, "promql-enable-feature", "", "[EXPERIMENTAL] Enable optional PromQL features, separated by commas. These are disabled by default in Promscale's PromQL engine. "+
+	// TODO: Remove deprecated feature in promscale 0.9.0
+	fs.StringVar(&cfg.PromQLEnableFeatures, "promql-enable-feature", "", "(DEPRECATED) Enable optional PromQL features, separated by commas. These are disabled by default in Promscale's PromQL engine. "+
 		"Currently, this includes 'promql-at-modifier' and 'promql-negative-offset'. For more information, see https://github.com/prometheus/prometheus/blob/master/docs/disabled_features.md")
 	fs.DurationVar(&cfg.MaxQueryTimeout, "promql-query-timeout", 2*time.Minute, "Maximum time a query may take before being aborted. This option sets both the default and maximum value of the 'timeout' parameter in "+
 		"'/api/v1/query.*' endpoints.")

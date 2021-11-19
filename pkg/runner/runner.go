@@ -51,6 +51,16 @@ func loggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.
 	return err
 }
 
+func WarnDeprecated(cfg *Config) {
+	if cfg.APICfg.PromQLEnableFeatures != "" {
+		log.Warn("Deprecated cli flag 'promql-enable-feature' used. Use 'enable-feature' instead")
+	}
+	if cfg.HaGroupLockID != 0 {
+		log.Warn("msg", "Deprecated cli flag 'leader-election-pg-advisory-lock-id' used. Scheduled election is DEPRECATED!")
+	}
+
+}
+
 func Run(cfg *Config) error {
 	log.Info("msg", "Version:"+version.Promscale+"; Commit Hash: "+version.CommitHash)
 

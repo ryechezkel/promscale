@@ -112,6 +112,10 @@ func ParseFlags(cfg *Config, args []string) (*Config, error) {
 		return nil, fmt.Errorf("validate config: %w", err)
 	}
 
+	if cfg.APICfg.PromscaleEnableFeatures != "" && cfg.APICfg.PromQLEnableFeatures != "" {
+		return nil, fmt.Errorf("Using 'promql-enable-feature' and 'enable-feature' simultaneously is not supported. Use 'enable-feature' only.")
+	}
+
 	if cfg.OTLPGRPCListenAddr != "" {
 		_, present := cfg.APICfg.PromscaleEnabledFeaturesMap["tracing"]
 		if !present {
@@ -151,7 +155,6 @@ func ParseFlags(cfg *Config, args []string) (*Config, error) {
 	}
 
 	if cfg.HaGroupLockID != 0 {
-		log.Warn("msg", "leader-election-pg-advisory-lock-id is set. Scheduled election is DEPRECATED!")
 		cfg.PgmodelCfg.UsesHA = true
 	}
 	return cfg, nil
