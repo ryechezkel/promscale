@@ -190,10 +190,12 @@ func TestInstallFlagPromscaleExtension(t *testing.T) {
 		api.InitMetrics()
 		cfg.InstallExtensions = false
 		migrator, err := runner.CreateClient(&cfg)
-		if err != nil {
-			t.Fatal(err)
+		if err == nil {
+			t.Fatal("expected an error as the promscale extension is required but was not installed")
 		}
-		migrator.Close()
+		if migrator != nil {
+			migrator.Close()
+		}
 
 		verifyExtensionExists(t, db, "promscale", false)
 
