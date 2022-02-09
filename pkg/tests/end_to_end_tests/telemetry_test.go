@@ -332,8 +332,8 @@ func TestPromQLBasedTelemetry(t *testing.T) {
 		}
 		defer conn.Release()
 
-		metrics := api.InitMetrics()
-		reader, err := runner.CreateClient(&cfg, metrics)
+		api.InitMetrics()
+		reader, err := runner.CreateClient(&cfg)
 		require.NoError(t, err)
 		defer reader.Close()
 
