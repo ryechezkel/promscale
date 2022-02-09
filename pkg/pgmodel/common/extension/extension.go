@@ -29,7 +29,7 @@ type ExtensionMigrateOptions struct {
 	UpgradePreRelease bool
 }
 
-// MigrateTimescaleDBExtension installs or updates TimescaleDB
+// InstallUpgradeTimescaleDBExtensions installs or updates TimescaleDB
 // Note that after this call any previous connections can break
 // so this has to be called ahead of opening connections.
 //
@@ -114,7 +114,7 @@ func CheckExtensionsVersion(conn *pgx.Conn, migrationFailedDueToLockError bool, 
 }
 
 func checkTimescaleDBVersion(conn *pgx.Conn) error {
-	timescaleVersion, isInstalled, err := fetchInstalledExtensionVersion(conn, "timescaledb")
+	timescaleVersion, isInstalled, err := FetchInstalledExtensionVersion(conn, "timescaledb")
 	if err != nil {
 		return fmt.Errorf("could not get the installed extension version: %w", err)
 	}
@@ -156,13 +156,14 @@ func checkPromscaleExtensionVersion(conn *pgx.Conn, migrationFailedDueToLockErro
 	}
 	if currentVersion == nil {
 		ExtensionIsInstalled = false
-		return nil
+		return fmt.Errorf("promscale extension is required but is not installed")
 	}
 	if version.ExtVersionRange(*currentVersion) {
 		ExtensionIsInstalled = true
 		PromscaleExtensionVersion = *currentVersion
 	} else {
 		ExtensionIsInstalled = false
+		return fmt.Errorf("promscale extension is installed but on an unsupported version: %s", *currentVersion)
 	}
 	return nil
 }
@@ -181,7 +182,7 @@ func extensionVersions(conn *pgx.Conn, extName string, validRange semver.Range, 
 		return nil, nil, fmt.Errorf("problem fetching default version: %w", err)
 	}
 
-	current, isInstalled, err := fetchInstalledExtensionVersion(conn, extName)
+	current, isInstalled, err := FetchInstalledExtensionVersion(conn, extName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("problem getting the installed extension version: %w", err)
 	}
@@ -319,7 +320,7 @@ func fetchDefaultExtensionVersions(conn *pgx.Conn, extName string) (semver.Versi
 	return v, nil
 }
 
-func fetchInstalledExtensionVersion(conn *pgx.Conn, extensionName string) (semver.Version, bool, error) {
+func FetchInstalledExtensionVersion(conn *pgx.Conn, extensionName string) (semver.Version, bool, error) {
 	var versionString string
 	if err := conn.QueryRow(
 		context.Background(),

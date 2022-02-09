@@ -112,7 +112,7 @@ func CreateClient(cfg *Config) (*pgclient.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Dependency checking error while trying to open DB connection: %w", err)
 	}
-	err = pgmodel.CheckDependencies(conn, appVersion, migrationFailedDueToLockError, extOptions)
+	err = pgmodel.CheckDependencies(conn, migrationFailedDueToLockError, extOptions)
 	if err != nil {
 		err = fmt.Errorf("dependency error: %w", err)
 		if migrationFailedDueToLockError {
@@ -243,7 +243,7 @@ func compileAnchoredRegexString(s string) (*regexp.Regexp, error) {
 }
 
 // Except for migration, every connection that communicates with the DB must be
-// guarded by an instante of the schema-version lease to ensure that no other
+// guarded by an instance of the schema-version lease to ensure that no other
 // connector can migrate the DB out from under it. We do not bother to release
 // said lease; in such and event the connector will be shutdown anyway, and
 // connection-death will close the connection.
@@ -252,5 +252,5 @@ func getSchemaLease(ctx context.Context, conn *pgx.Conn) error {
 	if err != nil {
 		return err
 	}
-	return pgmodel.CheckSchemaVersion(ctx, conn, appVersion, false)
+	return pgmodel.CheckPromscaleExtInstalledVersion(conn)
 }
