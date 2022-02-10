@@ -5,7 +5,9 @@
 package pgmodel
 
 import (
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/blang/semver/v4"
 	"github.com/jackc/pgx/v4"
@@ -19,7 +21,52 @@ import (
 
 var (
 	MigrationLockError = fmt.Errorf("Could not acquire migration lock. Ensure there are no other connectors running and try again.")
+	migrateMutex       = &sync.Mutex{}
 )
+
+func doesSchemaMigrationTableExist(db *pgx.Conn) (exists bool, err error) {
+	const stmt = "SELECT count(*) FILTER (WHERE tablename = 'prom_schema_migrations') > 0 FROM pg_tables"
+	err = db.QueryRow(
+		context.Background(),
+		stmt,
+	).Scan(&exists)
+	return
+}
+
+func removeOldExtensionIfExists(db *pgx.Conn) (err error) {
+	const (
+		// transition is the first version of the extension that does the
+		// migrations the new way (i.e. in the extension rather than from promscale connector)
+		transition = "0.5.0"
+		stmt       = "DROP EXTENSION IF EXISTS promscale" // TODO to cascade or not to cascade?
+	)
+
+	installedVersion, installed, err := extension.FetchInstalledExtensionVersion(db, "promscale")
+	if err != nil {
+		return err
+	}
+
+	if installed && installedVersion.LT(semver.MustParse(transition)) {
+		_, err := db.Exec(
+			context.Background(),
+			stmt,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func installExtensionAllBalls(db *pgx.Conn) (err error) {
+	const stmt = "CREATE EXTENSION promscale SCHEMA _prom_ext VERSION '0.0.0'"
+	_, err = db.Exec(
+		context.Background(),
+		stmt,
+	)
+	return
+}
 
 func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryLock, extOptions extension.ExtensionMigrateOptions) error {
 	// At startup migrators attempt to grab the schema-version lock. If this
@@ -46,9 +93,22 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 		log.Warn("msg", "skipping migration lock")
 	}
 
-	err := oldMigrate(conn, appVersion)
+	// if the old prom_schema_migrations table exists, then we need to apply any outstanding
+	// migrations from the old way of doing migrations, then transition to the new way
+	schemaMigrationTableExists, err := doesSchemaMigrationTableExist(conn)
 	if err != nil {
-		return fmt.Errorf("Error while trying to migrate DB: %w", err)
+		return err
+	}
+	if schemaMigrationTableExists {
+		if err = oldMigrate(conn, appVersion); err != nil {
+			return fmt.Errorf("error while trying to migrate DB: %w", err)
+		}
+		if err = removeOldExtensionIfExists(conn); err != nil {
+			return fmt.Errorf("error while dropping old promscale extension: %w", err)
+		}
+		if err = installExtensionAllBalls(conn); err != nil {
+			return fmt.Errorf("error while installing promscale extension version 0.0.0: %w", err)
+		}
 	}
 
 	_, err = extension.InstallUpgradePromscaleExtensions(conn, extOptions)

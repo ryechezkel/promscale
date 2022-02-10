@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"sync"
 
 	"github.com/blang/semver/v4"
 	"github.com/jackc/pgconn"
@@ -51,7 +50,6 @@ var (
 			"apply_permissions.sql", //	should be last
 		},
 	}
-	migrateMutex = &sync.Mutex{}
 
 	//Format of migration files. e.g. 6-foo.sql
 	migrationFileNameRegexp = regexp.MustCompile(`([[:digit:]]+)-[[:word:]]+.sql`)
