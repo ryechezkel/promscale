@@ -33,7 +33,7 @@ func doesSchemaMigrationTableExist(db *pgx.Conn) (exists bool, err error) {
 	return
 }
 
-func removeOldExtensionIfExists(db *pgx.Conn) (err error) {
+func removeOldExtensionIfExists(db *pgx.Conn) error {
 	const (
 		// transition is the first version of the extension that does the
 		// migrations the new way (i.e. in the extension rather than from promscale connector)
@@ -59,13 +59,13 @@ func removeOldExtensionIfExists(db *pgx.Conn) (err error) {
 	return nil
 }
 
-func installExtensionAllBalls(db *pgx.Conn) (err error) {
+func installExtensionAllBalls(db *pgx.Conn) error {
 	const stmt = "CREATE EXTENSION promscale SCHEMA _prom_ext VERSION '0.0.0'"
-	_, err = db.Exec(
+	_, err := db.Exec(
 		context.Background(),
 		stmt,
 	)
-	return
+	return err
 }
 
 func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryLock, extOptions extension.ExtensionMigrateOptions) error {
