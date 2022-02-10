@@ -43,7 +43,7 @@ func removeOldExtensionIfExists(db *pgx.Conn) error {
 
 	installedVersion, installed, err := extension.FetchInstalledExtensionVersion(db, "promscale")
 	if err != nil {
-		return err
+		return fmt.Errorf("error fetching extension version while dropping old extension: %w", err)
 	}
 
 	if installed && installedVersion.LT(semver.MustParse(transition)) {
@@ -52,7 +52,7 @@ func removeOldExtensionIfExists(db *pgx.Conn) error {
 			stmt,
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error dropping old extension: %w", err)
 		}
 	}
 
@@ -65,7 +65,7 @@ func installExtensionAllBalls(db *pgx.Conn) error {
 		context.Background(),
 		stmt,
 	)
-	return err
+	return fmt.Errorf("error installing Promscale extension at version 0.0.0: %w", err)
 }
 
 func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryLock, extOptions extension.ExtensionMigrateOptions) error {
