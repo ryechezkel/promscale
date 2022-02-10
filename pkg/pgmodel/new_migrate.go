@@ -93,8 +93,12 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 		log.Warn("msg", "skipping migration lock")
 	}
 
+	migrateMutex.Lock()
+	defer migrateMutex.Unlock()
+
 	// if the old prom_schema_migrations table exists, then we need to apply any outstanding
 	// migrations from the old way of doing migrations, then transition to the new way
+	// the prom_schema_migrations table will be dropped as a part of the transition
 	schemaMigrationTableExists, err := doesSchemaMigrationTableExist(conn)
 	if err != nil {
 		return err
@@ -120,9 +124,6 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 }
 
 func oldMigrate(db *pgx.Conn, versionInfo VersionInfo) (err error) {
-	migrateMutex.Lock()
-	defer migrateMutex.Unlock()
-
 	appVersion, err := semver.Make(versionInfo.Version)
 	if err != nil {
 		return errors.ErrInvalidSemverFormat
