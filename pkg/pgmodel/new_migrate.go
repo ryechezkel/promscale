@@ -148,12 +148,6 @@ func oldMigrate(db *pgx.Conn, versionInfo VersionInfo) (err error) {
 	return nil
 }
 
-// CheckDependencies makes sure the Promscale and TimescaleDB extensions are set up correctly. This will set
-// the ExtensionIsInstalled flag and thus should only be called once, at initialization.
-func CheckDependencies(db *pgx.Conn, migrationFailedDueToLockError bool, extOptions extension.ExtensionMigrateOptions) (err error) {
-	return extension.CheckVersions(db, migrationFailedDueToLockError, extOptions)
-}
-
 // CheckPromscaleExtInstalledVersion checks the promscale extension version installed
 func CheckPromscaleExtInstalledVersion(conn *pgx.Conn) error {
 	installedVersion, isInstalled, err := extension.FetchInstalledExtensionVersion(conn, "promscale")

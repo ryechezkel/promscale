@@ -46,7 +46,7 @@ func TestMigrate(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer conn.Release()
-		err = pgmodel.CheckDependencies(conn.Conn(), false, extOptions)
+		err = extension.CheckVersions(conn.Conn(), false, extOptions)
 		if err != nil {
 			t.Error(err)
 		}
