@@ -128,7 +128,7 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 		}
 	}
 
-	_, err = extension.InstallUpgradePromscaleExtensions(conn, extOptions)
+	err = extension.InstallUpgradePromscaleExtensions(conn, extOptions)
 	if err != nil {
 		return fmt.Errorf("failed to install/upgrade promscale extension: %w", err)
 	}

@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	ExtensionIsInstalled      = false
+	//	ExtensionIsInstalled      = false
 	PromscaleExtensionVersion semver.Version
 )
 
@@ -52,18 +52,17 @@ func InstallUpgradeTimescaleDBExtensions(connstr string, extOptions ExtensionMig
 
 }
 
-func InstallUpgradePromscaleExtensions(db *pgx.Conn, extOptions ExtensionMigrateOptions) (bool, error) {
-	ExtensionIsInstalled = false
+func InstallUpgradePromscaleExtensions(db *pgx.Conn, extOptions ExtensionMigrateOptions) error {
 	err := MigrateExtension(db, "promscale", schema.PromExt, version.ExtVersionRange, version.ExtVersionRangeString, extOptions)
 	if err != nil {
 		log.Warn("msg", fmt.Sprintf("could not install promscale: %v. continuing without extension", err))
 	}
 
 	if err = CheckExtensionsVersion(db, false, extOptions); err != nil {
-		return false, fmt.Errorf("error encountered while migrating extension: %w", err)
+		return fmt.Errorf("error encountered while migrating extension: %w", err)
 	}
 
-	return ExtensionIsInstalled, nil
+	return nil
 }
 
 // CheckVersions is responsible for verifying the version compatibility of installed Postgresql database and extensions.
@@ -144,7 +143,6 @@ func checkTimescaleDBVersion(conn *pgx.Conn) error {
 func checkPromscaleExtensionVersion(conn *pgx.Conn, migrationFailedDueToLockError bool, extOptions ExtensionMigrateOptions) error {
 	currentVersion, newVersion, err := extensionVersions(conn, "promscale", version.ExtVersionRange, version.ExtVersionRangeString, extOptions)
 	if err != nil {
-		ExtensionIsInstalled = false
 		if err == errors.ErrExtUnavailable {
 			//the promscale extension is optional
 			return nil
@@ -155,14 +153,11 @@ func checkPromscaleExtensionVersion(conn *pgx.Conn, migrationFailedDueToLockErro
 		log.Warn("msg", "Unable to install/update the Promscale extension; failed to acquire the lock. Ensure there are no other connectors running and try again.")
 	}
 	if currentVersion == nil {
-		ExtensionIsInstalled = false
 		return fmt.Errorf("promscale extension is required but is not installed")
 	}
 	if version.ExtVersionRange(*currentVersion) {
-		ExtensionIsInstalled = true
 		PromscaleExtensionVersion = *currentVersion
 	} else {
-		ExtensionIsInstalled = false
 		return fmt.Errorf("promscale extension is installed but on an unsupported version: %s", *currentVersion)
 	}
 	return nil

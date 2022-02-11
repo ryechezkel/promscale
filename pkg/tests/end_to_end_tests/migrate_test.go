@@ -215,22 +215,13 @@ func TestMigrateTwice(t *testing.T) {
 	}
 	testhelpers.WithDB(t, *testDatabase, testhelpers.NoSuperuser, false, extensionState, func(dbOwner *pgxpool.Pool, t testing.TB, connectURL string) {
 		performMigrate(t, connectURL, testhelpers.PgConnectURL(*testDatabase, testhelpers.Superuser))
-		if *useExtension && !extension.ExtensionIsInstalled {
-			t.Errorf("extension is not installed, expected it to be installed")
-		}
-
-		//reset the flag to make sure it's set correctly again.
-		extension.ExtensionIsInstalled = false
 
 		performMigrate(t, connectURL, testhelpers.PgConnectURL(*testDatabase, testhelpers.Superuser))
-		if *useExtension && !extension.ExtensionIsInstalled {
-			t.Errorf("extension is not installed, expected it to be installed")
-		}
 
 		db := testhelpers.PgxPoolWithRole(t, *testDatabase, "prom_writer")
 		defer db.Close()
 
-		if *useTimescaleDB && extension.ExtensionIsInstalled {
+		if *useTimescaleDB {
 			_, err := telemetry.NewEngine(pgxconn.NewPgxConn(db), [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, nil)
 			if err != nil {
 				t.Fatal("creating telemetry engine: %w", err)
