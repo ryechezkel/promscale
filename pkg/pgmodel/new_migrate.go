@@ -16,7 +16,6 @@ import (
 	"github.com/timescale/promscale/pkg/pgmodel/common/errors"
 	"github.com/timescale/promscale/pkg/pgmodel/common/extension"
 	"github.com/timescale/promscale/pkg/util"
-	"github.com/timescale/promscale/pkg/version"
 )
 
 var (
@@ -69,12 +68,16 @@ func installExtensionAllBalls(db *pgx.Conn) error {
 }
 
 func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryLock, extOptions extension.ExtensionMigrateOptions) error {
+	appSemver, err := semver.Make(appVersion.Version)
+	if err != nil {
+		return errors.ErrInvalidSemverFormat
+	}
+
 	// At startup migrators attempt to grab the schema-version lock. If this
 	// fails that means some other connector is running. All is not lost: some
 	// other connector may have migrated the DB to the correct version. We warn,
 	// then start the connector as normal. If we are on the wrong version, the
 	// normal version-check code will prevent us from running.
-
 	if leaseLock != nil {
 		locked, err := leaseLock.GetAdvisoryLock()
 		if err != nil {
@@ -110,11 +113,12 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 	// the prom_schema_migrations table will be dropped as a part of the transition
 	schemaMigrationTableExists, err := doesSchemaMigrationTableExist(conn)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to determine whether the prom_schema_migrations table existed: %w", err)
 	}
 	if schemaMigrationTableExists {
-		if err = oldMigrate(conn, appVersion); err != nil {
-			return fmt.Errorf("error while trying to migrate DB: %w", err)
+		mig := NewMigrator(conn, migrations.MigrationFiles, tableOfContents)
+		if err = mig.Migrate(appSemver); err != nil {
+			return fmt.Errorf("Error encountered during migration: %w", err)
 		}
 		if err = removeOldExtensionIfExists(conn); err != nil {
 			return fmt.Errorf("error while dropping old promscale extension: %w", err)
@@ -126,39 +130,8 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 
 	_, err = extension.InstallUpgradePromscaleExtensions(conn, extOptions)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to install/upgrade promscale extension: %w", err)
 	}
 
-	return nil
-}
-
-func oldMigrate(db *pgx.Conn, versionInfo VersionInfo) (err error) {
-	appVersion, err := semver.Make(versionInfo.Version)
-	if err != nil {
-		return errors.ErrInvalidSemverFormat
-	}
-
-	mig := NewMigrator(db, migrations.MigrationFiles, tableOfContents)
-
-	err = mig.Migrate(appVersion)
-	if err != nil {
-		return fmt.Errorf("Error encountered during migration: %w", err)
-	}
-
-	return nil
-}
-
-// CheckPromscaleExtInstalledVersion checks the promscale extension version installed
-func CheckPromscaleExtInstalledVersion(conn *pgx.Conn) error {
-	installedVersion, isInstalled, err := extension.FetchInstalledExtensionVersion(conn, "promscale")
-	if err != nil {
-		return fmt.Errorf("failed to fetch the installed version of the promscale extension: %s", err)
-	}
-	if !isInstalled {
-		return fmt.Errorf("promscale extension is required but is not installed")
-	}
-	if !version.ExtVersionRange(installedVersion) {
-		return fmt.Errorf("the promscale connector requires the promscale extension to be in version range %s, but the installed version of the extension is %s", version.ExtVersionRangeString, installedVersion)
-	}
 	return nil
 }
