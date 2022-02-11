@@ -274,6 +274,19 @@ func MigrateExtension(conn *pgx.Conn, extName string, extSchemaName string, vali
 	return nil
 }
 
+func AreSupportedPromscaleExtensionVersionsAvailable(conn *pgx.Conn) (bool, error) {
+	versions, err := fetchAvailableExtensionVersions(conn, "promscale")
+	if err != nil {
+		return false, err
+	}
+	for _, v := range versions {
+		if version.ExtVersionRange(v) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func fetchAvailableExtensionVersions(conn *pgx.Conn, extName string) (semver.Versions, error) {
 	var versionStrings []string
 	versions := make(semver.Versions, 0)

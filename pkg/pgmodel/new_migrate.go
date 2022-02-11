@@ -96,6 +96,15 @@ func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryL
 	migrateMutex.Lock()
 	defer migrateMutex.Unlock()
 
+	// make sure a supported version of the extension is available before making any database changes
+	available, err := extension.AreSupportedPromscaleExtensionVersionsAvailable(conn)
+	if err != nil {
+		return fmt.Errorf("error while checking for supported and available promscale extension versions: %w", err)
+	}
+	if !available {
+		return fmt.Errorf("no supported promscale extension versions are available and the extension is required")
+	}
+
 	// if the old prom_schema_migrations table exists, then we need to apply any outstanding
 	// migrations from the old way of doing migrations, then transition to the new way
 	// the prom_schema_migrations table will be dropped as a part of the transition

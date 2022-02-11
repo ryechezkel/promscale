@@ -61,8 +61,8 @@ var (
 	TimescaleVersionRange           = timescaleVersionSafeRange.OR(timescaleVersionWarnRange)
 
 	// ExtVersionRangeString is a range of required promscale extension versions
-	// support 0.1.x and 0.3.x
-	ExtVersionRangeString = ">=0.1.0 <0.3.99"
+	// support 0.5.x
+	ExtVersionRangeString = ">=0.5.0 <0.5.99"
 	ExtVersionRange       = semver.MustParseRange(ExtVersionRangeString)
 )
 
