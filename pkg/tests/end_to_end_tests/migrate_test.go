@@ -155,7 +155,7 @@ func TestInstallFlagPromscaleExtension(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	if !*useExtension {
-		t.Skip(("need promscale extension for this test"))
+		t.Skip("need promscale extension for this test")
 	}
 	withDB(t, *testDatabase, func(db *pgxpool.Pool, _ testing.TB) {
 		conn, err := db.Acquire(context.Background())

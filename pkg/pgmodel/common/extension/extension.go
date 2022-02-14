@@ -43,7 +43,7 @@ func InstallUpgradeTimescaleDBExtensions(connstr string, extOptions ExtensionMig
 	}
 	defer func() { _ = db.Close(context.Background()) }()
 
-	err = MigrateExtension(db, "timescaledb", schema.Public, version.TimescaleVersionRange, version.TimescaleVersionRangeFullString, extOptions)
+	err = MigrateExtension(db, "timescaledb", schema.Public, version.TimescaleVersionRange, version.TimescaleVersionRangeString, extOptions)
 	if err != nil {
 		return fmt.Errorf("could not install timescaledb: %w", err)
 	}
@@ -121,21 +121,9 @@ func checkTimescaleDBVersion(conn *pgx.Conn) error {
 		log.Warn("msg", "Running Promscale without TimescaleDB. Some features will be disabled.")
 		return nil
 	}
-	switch version.VerifyTimescaleVersion(timescaleVersion) {
-	case version.Warn:
-		safeRanges := strings.Split(version.TimescaleVersionRangeString.Safe, " ")
-		log.Warn(
-			"msg",
-			fmt.Sprintf(
-				"Might lead to incompatibility issues due to TimescaleDB version. Expected version within %s to %s.",
-				safeRanges[0], safeRanges[1],
-			),
-			"Installed Timescaledb version:", timescaleVersion.String(),
-		)
-	case version.Err:
-		safeRanges := strings.Split(version.TimescaleVersionRangeString.Safe, " ")
+	if !version.VerifyTimescaleVersion(timescaleVersion) {
+		safeRanges := strings.Split(version.TimescaleVersionRangeString, " ")
 		return fmt.Errorf("incompatible Timescaledb version: %s. Expected version within %s to %s", timescaleVersion.String(), safeRanges[0], safeRanges[1])
-	case version.Safe:
 	}
 	return nil
 }

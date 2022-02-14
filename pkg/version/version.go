@@ -6,12 +6,6 @@ package version
 
 import "github.com/blang/semver/v4"
 
-const (
-	Safe = iota
-	Warn
-	Err
-)
-
 var (
 	// Rules for Versioning:
 	// A release version cannot contain `dev` in its pre-release tag.
@@ -48,17 +42,11 @@ var (
 	PgVersionNumRange       = ">=12.x <15.x" // Corresponds to range within pg 12.0 to pg 14.99
 	pgAcceptedVersionsRange = semver.MustParseRange(PgVersionNumRange)
 
-	TimescaleVersionRangeString = struct {
-		Safe, Warn string
-	}{
-		Safe: ">=1.7.3 <2.99.0",
-		Warn: ">=1.7.0 <1.7.3",
-	}
-	timescaleVersionSafeRange = semver.MustParseRange(TimescaleVersionRangeString.Safe)
-	timescaleVersionWarnRange = semver.MustParseRange(TimescaleVersionRangeString.Warn)
+	TimescaleVersionRangeString = ">=2.5.2 <2.99.0"
+	TimescaleVersionRange       = semver.MustParseRange(TimescaleVersionRangeString)
 
-	TimescaleVersionRangeFullString = TimescaleVersionRangeString.Safe + " || " + TimescaleVersionRangeString.Warn
-	TimescaleVersionRange           = timescaleVersionSafeRange.OR(timescaleVersionWarnRange)
+	//TimescaleVersionRangeFullString = TimescaleVersionRangeString.Safe + " || " + TimescaleVersionRangeString.Warn
+	//TimescaleVersionRange           = timescaleVersionSafeRange.OR(timescaleVersionWarnRange)
 
 	// ExtVersionRangeString is a range of required promscale extension versions
 	// support 0.5.x
@@ -72,11 +60,6 @@ func VerifyPgVersion(version semver.Version) bool {
 }
 
 // VerifyTimescaleVersion verifies version compatibility with Timescaledb.
-func VerifyTimescaleVersion(version semver.Version) uint {
-	if timescaleVersionSafeRange(version) {
-		return Safe
-	} else if timescaleVersionWarnRange(version) {
-		return Warn
-	}
-	return Err
+func VerifyTimescaleVersion(version semver.Version) bool {
+	return TimescaleVersionRange(version)
 }
