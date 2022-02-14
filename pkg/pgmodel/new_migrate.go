@@ -64,7 +64,10 @@ func installExtensionAllBalls(db *pgx.Conn) error {
 		context.Background(),
 		stmt,
 	)
-	return fmt.Errorf("error installing Promscale extension at version 0.0.0: %w", err)
+	if err != nil {
+		return fmt.Errorf("error installing Promscale extension at version 0.0.0: %w", err)
+	}
+	return nil
 }
 
 func Migrate(conn *pgx.Conn, appVersion VersionInfo, leaseLock *util.PgAdvisoryLock, extOptions extension.ExtensionMigrateOptions) error {
