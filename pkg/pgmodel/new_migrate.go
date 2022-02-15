@@ -46,6 +46,7 @@ func removeOldExtensionIfExists(db *pgx.Conn) error {
 	}
 
 	if installed && installedVersion.LT(semver.MustParse(transition)) {
+		log.Info("msg", "Dropping extension at version '"+installedVersion.String()+"'")
 		_, err := db.Exec(
 			context.Background(),
 			stmt,
@@ -59,6 +60,7 @@ func removeOldExtensionIfExists(db *pgx.Conn) error {
 }
 
 func installExtensionAllBalls(db *pgx.Conn) error {
+	log.Info("msg", "Installing extension at version '0.0.0'")
 	const stmt = "CREATE EXTENSION promscale SCHEMA _prom_ext VERSION '0.0.0'"
 	_, err := db.Exec(
 		context.Background(),

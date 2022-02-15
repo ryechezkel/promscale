@@ -202,9 +202,18 @@ func MigrateExtension(conn *pgx.Conn, extName string, extSchemaName string, vali
 	}
 
 	if !isInstalled {
-		_, extErr := conn.Exec(context.Background(),
-			fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %s WITH SCHEMA %s VERSION '%s'",
-				extName, extSchemaName, getSqlVersion(*newVersion, extName)))
+		var query = ""
+		switch extName {
+		case "timescaledb":
+			query = fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %s WITH SCHEMA %s VERSION '%s'",
+				extName, extSchemaName, getSqlVersion(*newVersion, extName))
+		case "promscale":
+			query = fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %s VERSION '%s'",
+				extName, getSqlVersion(*newVersion, extName))
+		default:
+			return fmt.Errorf("unknown extension: %s", extName)
+		}
+		_, extErr := conn.Exec(context.Background(), query)
 		if extErr != nil {
 			return extErr
 		}
