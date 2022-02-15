@@ -161,15 +161,9 @@ func (e ExtensionState) GetDockerImageName() (string, error) {
 
 	switch e &^ postgres12Bit &^ postgres13Bit {
 	case Timescale1:
-		if PGMajor != "12" {
-			return "", fmt.Errorf("timescaledb 1.x requires pg12")
-		}
-		image = "timescale/timescaledb:1.7.4-pg12"
+		return "", fmt.Errorf("timescaledb 1.x is no longer supported")
 	case Timescale1AndPromscale:
-		if PGMajor != "12" {
-			return "", fmt.Errorf("timescaledb 1.x requires pg12")
-		}
-		image = LatestDBWithPromscaleImageBase + ":latest-ts1-pg12"
+		return "", fmt.Errorf("timescaledb 1.x is no longer supported")
 	case Timescale2, Multinode:
 		image = "timescale/timescaledb:latest-" + PGTag
 	case Timescale2AndPromscale, MultinodeAndPromscale:

@@ -45,9 +45,6 @@ var (
 	TimescaleVersionRangeString = ">=2.5.2 <2.99.0"
 	TimescaleVersionRange       = semver.MustParseRange(TimescaleVersionRangeString)
 
-	//TimescaleVersionRangeFullString = TimescaleVersionRangeString.Safe + " || " + TimescaleVersionRangeString.Warn
-	//TimescaleVersionRange           = timescaleVersionSafeRange.OR(timescaleVersionWarnRange)
-
 	// ExtVersionRangeString is a range of required promscale extension versions
 	// support 0.5.x
 	ExtVersionRangeString = ">=0.5.0 <0.5.99"
