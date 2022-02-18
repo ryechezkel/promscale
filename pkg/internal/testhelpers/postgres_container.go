@@ -156,24 +156,26 @@ func (e ExtensionState) GetPGMajor() string {
 
 func (e ExtensionState) GetDockerImageName() (string, error) {
 	var image string
-	PGMajor := e.GetPGMajor()
-	PGTag := "pg" + PGMajor
+	//PGMajor := e.GetPGMajor()
+	//PGTag := "pg" + PGMajor
 
 	switch e &^ postgres12Bit &^ postgres13Bit {
 	case Timescale1:
 		return "", fmt.Errorf("timescaledb 1.x is no longer supported")
 	case Timescale1AndPromscale:
 		return "", fmt.Errorf("timescaledb 1.x is no longer supported")
-	case Timescale2, Multinode:
-		image = "timescale/timescaledb:latest-" + PGTag
-	case Timescale2AndPromscale, MultinodeAndPromscale:
-		image = LatestDBHAPromscaleImageBase + ":" + PGTag + "-latest"
-	case VanillaPostgres:
-		image = "postgres:" + PGMajor
-	case TimescaleOSS:
-		image = "timescale/timescaledb:latest-" + PGTag + "-oss"
-	case TimescaleNightly, TimescaleNightlyMultinode:
-		image = "timescaledev/timescaledb:nightly-" + PGTag
+	default:
+		image = "jgpruitt/promscale-extension"
+		//case Timescale2, Multinode:
+		//	image = "timescale/timescaledb:latest-" + PGTag
+		//case Timescale2AndPromscale, MultinodeAndPromscale:
+		//	image = LatestDBHAPromscaleImageBase + ":" + PGTag + "-latest"
+		//case VanillaPostgres:
+		//	image = "postgres:" + PGMajor
+		//case TimescaleOSS:
+		//	image = "timescale/timescaledb:latest-" + PGTag + "-oss"
+		//case TimescaleNightly, TimescaleNightlyMultinode:
+		//	image = "timescaledev/timescaledb:nightly-" + PGTag
 	}
 	return image, nil
 }

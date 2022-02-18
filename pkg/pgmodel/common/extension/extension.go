@@ -202,7 +202,7 @@ func MigrateExtension(conn *pgx.Conn, extName string, extSchemaName string, vali
 	}
 
 	if !isInstalled {
-		var query = ""
+		var query string
 		switch extName {
 		case "timescaledb":
 			query = fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %s WITH SCHEMA %s VERSION '%s'",
